@@ -103,13 +103,13 @@ docker run -p 8000:8000 --env-file .env oauth_python_api
 
 ## 5. Client Credentials Flow (Service-to-Service)
 
-If you are building an automated script or background job that needs to access this API, it cannot use a browser to log in. Instead, it must authenticate as an application using the **Client Credentials Flow**.
+If you are building an automated script or background job that needs to access this API, it cannot use a browser to log in. Instead, it must authenticate as an application using the **Client Credentials Flow** with **X.509 Certificate Authentication**.
 
-Our setup scripts automatically create a second "Client" App Registration, assign it the correct **App Roles** (`Items.Write.All`), and generate a `.env.client` file with the client credentials.
+Our setup scripts automatically create a second "Client" App Registration, assign it the correct **App Roles** (`Items.Write.All`), generate a secure **Self-Signed Certificate** in the `.certs/` folder, and create a `.env.client` file with the certificate thumbprint.
 
 ### Example Clients
 
-We have provided two complete example clients that read from `.env.client`, request a JWT from Azure AD, and call the API.
+We have provided two complete example clients that natively load the `.pem` certificate, securely request a JWT from Azure AD, and call the API.
 
 #### Python Client
 ```bash
