@@ -12,6 +12,11 @@ ENV/
 
 # Environment variables (NEVER commit secrets)
 .env
+.env.client
+
+# C# / .NET
+[Bb]in/
+[Oo]bj/
 
 # IDE
 .vscode/

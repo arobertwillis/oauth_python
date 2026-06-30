@@ -61,47 +61,42 @@ async def get_current_user(
     return user
 
 
-def require_groups(allowed_group_ids: list[str]):
+def require_permissions(allowed_group_ids: list[str], allowed_roles: list[str]):
     """
-    Factory that creates a FastAPI dependency enforcing group membership.
-
-    Usage:
-        # Allow only writers:
-        @router.post("/items", dependencies=[Depends(require_groups([WRITER_GROUP_ID]))])
-
-        # Allow readers OR writers:
-        @router.get("/items", dependencies=[Depends(require_groups([READER_ID, WRITER_ID]))])
+    Factory that creates a FastAPI dependency enforcing group OR role membership.
 
     Args:
-        allowed_group_ids: List of Azure AD security group Object IDs.
-                          The user must belong to at least ONE of these groups.
+        allowed_group_ids: List of Azure AD security group Object IDs (for human users).
+        allowed_roles: List of Azure AD App Roles (for automated Service Principals).
 
     Returns:
         A FastAPI dependency function.
 
-    How group claims work:
-        When a user authenticates, Azure includes their security group
-        Object IDs in the JWT's `groups` claim (an array of GUIDs).
-        This function checks that at least one of the user's groups
-        matches the allowed list.
+    How it works:
+        - Human users get a `groups` claim containing their Security Group IDs.
+        - Automated scripts (Client Credentials) get a `roles` claim with their App Roles.
+        This checks if the caller has AT LEAST ONE valid group OR role.
     """
 
-    async def _verify_groups(user: User = Depends(get_current_user)) -> User:
-        # The `groups` claim contains a list of group Object IDs (GUIDs)
+    async def _verify_permissions(user: User = Depends(get_current_user)) -> User:
         user_groups: list[str] = getattr(user, "groups", None) or []
+        user_roles: list[str] = getattr(user, "roles", None) or []
 
-        if not any(group_id in user_groups for group_id in allowed_group_ids):
+        has_group = any(group_id in user_groups for group_id in allowed_group_ids)
+        has_role = any(role in user_roles for role in allowed_roles)
+
+        if not (has_group or has_role):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=(
-                    "You do not have the required group membership to access "
-                    "this resource. Contact your administrator to be added to "
-                    "the appropriate security group."
+                    "You do not have the required permissions to access this resource. "
+                    "Ensure you are in the correct security group (for users) or have "
+                    "been granted the correct App Role (for applications)."
                 ),
             )
         return user
 
-    return _verify_groups
+    return _verify_permissions
 
 
 # ── Convenience Dependencies ───────────────────────────────────
@@ -111,17 +106,23 @@ def require_groups(allowed_group_ids: list[str]):
 
 def require_read_access():
     """
-    Dependency allowing users in EITHER the reader or writer group.
-
-    Writers can do everything readers can, so both groups are allowed.
+    Dependency allowing users in EITHER the reader or writer group,
+    OR service principals with the Read or Write App Roles.
     """
     settings = get_settings()
-    return require_groups(settings.all_group_ids)
+    return require_permissions(
+        allowed_group_ids=settings.all_group_ids,
+        allowed_roles=["Items.Read.All", "Items.Write.All"]
+    )
 
 
 def require_write_access():
     """
-    Dependency allowing ONLY users in the writer group.
+    Dependency allowing ONLY users in the writer group,
+    OR service principals with the Write App Role.
     """
     settings = get_settings()
-    return require_groups([settings.azure_writer_group_id])
+    return require_permissions(
+        allowed_group_ids=[settings.azure_writer_group_id],
+        allowed_roles=["Items.Write.All"]
+    )

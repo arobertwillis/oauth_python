@@ -6,9 +6,19 @@
 # Edit the values below BEFORE running the setup scripts.
 # ============================================================
 
-# ── App Registration ────────────────────────────────────────────
-# Display name for the app registration in Azure
+# ── App Registration (API) ──────────────────────────────────────────
+# Display name for the main API app registration in Azure
 APP_NAME="OAuth Python API"
+
+# App Roles for Service-to-Service auth (Client Credentials)
+ROLE_READ_ALL="Items.Read.All"
+ROLE_READ_ALL_DESC="Read all items (Service-to-Service)"
+ROLE_WRITE_ALL="Items.Write.All"
+ROLE_WRITE_ALL_DESC="Read and write all items (Service-to-Service)"
+
+# ── App Registration (Client) ───────────────────────────────────
+# Display name for the automated CLI client app
+CLIENT_APP_NAME="OAuth Python API - CLI Client"
 
 # ── Redirect URIs ───────────────────────────────────────────────
 # Where Azure redirects after authentication (Swagger UI callback)

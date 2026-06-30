@@ -55,9 +55,27 @@ read_id() {
     fi
 }
 
-# ── Delete App Registration ──────────────────────────────────
-step "Deleting App Registration"
+# ── Delete App Registrations ──────────────────────────────────
+step "Deleting App Registrations"
 
+# Delete Client App
+CLIENT_APP_OBJECT_ID=$(read_id ".client_app_object_id")
+if [[ -n "$CLIENT_APP_OBJECT_ID" ]]; then
+    info "Deleting client app registration (Object ID: $CLIENT_APP_OBJECT_ID)..."
+    az ad app delete --id "$CLIENT_APP_OBJECT_ID" 2>/dev/null && \
+        ok "Deleted client app registration '$CLIENT_APP_NAME'" || \
+        warn "Could not delete client app registration (may already be deleted)"
+else
+    CLIENT_APP_OBJECT_ID=$(az ad app list --display-name "$CLIENT_APP_NAME" --query "[0].id" --output tsv 2>/dev/null || echo "")
+    if [[ -n "$CLIENT_APP_OBJECT_ID" && "$CLIENT_APP_OBJECT_ID" != "None" ]]; then
+        info "Found client app registration by name, deleting..."
+        az ad app delete --id "$CLIENT_APP_OBJECT_ID" 2>/dev/null && \
+            ok "Deleted client app registration '$CLIENT_APP_NAME'" || \
+            warn "Could not delete client app registration"
+    fi
+fi
+
+# Delete API App
 APP_OBJECT_ID=$(read_id ".app_object_id")
 
 if [[ -n "$APP_OBJECT_ID" ]]; then
@@ -136,8 +154,16 @@ else
     info ".env file not found"
 fi
 
+CLIENT_ENV_FILE="$REPO_ROOT/.env.client"
+if [[ -f "$CLIENT_ENV_FILE" ]]; then
+    rm "$CLIENT_ENV_FILE"
+    ok "Deleted .env.client file"
+fi
+
 # Remove state files
 for STATE_FILE in .app_client_id .app_object_id .sp_object_id .scope_id \
+                  .role_read_id .role_write_id \
+                  .client_app_client_id .client_app_object_id .client_sp_object_id .client_secret \
                   .reader_group_id .writer_group_id \
                   .reader_user_id .writer_user_id .tenant_domain; do
     if [[ -f "$SCRIPT_DIR/$STATE_FILE" ]]; then

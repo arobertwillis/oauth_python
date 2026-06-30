@@ -39,13 +39,14 @@ That's it. The script will:
 
 If you prefer to run steps individually (or need to re-run a single step):
 
-| Script | What it does |
-|---|---|
-| `01_create_app_registration.sh` | App registration, SPA redirect, API scope, manifest, admin consent |
-| `02_create_groups.sh` | Creates api-readers and api-writers security groups |
-| `03_create_users.sh` | Creates reader and writer test users |
-| `04_assign_memberships.sh` | Adds users to groups, assigns groups to enterprise app |
-| `05_generate_env.sh` | Collects all IDs and writes the .env file |
+### What the scripts do:
+
+1. `01_create_app_registration.sh`: Creates the API Application, configures PKCE SPA redirects, adds App Roles.
+2. `02_create_groups.sh`: Creates `api-readers` and `api-writers` security groups.
+3. `03_create_users.sh`: Creates `reader@` and `writer@` test users.
+4. `04_assign_memberships.sh`: Puts the test users into the correct groups.
+5. `06_create_client_app.sh`: Creates a second App Registration representing a CLI client and grants it App Roles.
+6. `05_generate_env.sh`: Scrapes all the IDs and automatically generates your `.env` and `.env.client` files.
 
 Run them in order:
 

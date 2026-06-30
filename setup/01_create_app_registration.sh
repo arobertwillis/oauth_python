@@ -94,9 +94,14 @@ fi
 echo "$SP_OBJECT_ID" > "$SCRIPT_DIR/.sp_object_id"
 ok "Service principal Object ID: $SP_OBJECT_ID"
 
-# ── 1.4 Generate a UUID for the API scope ─────────────────────
+# ── 1.4 Generate UUIDs for scopes and roles ───────────────────
 SCOPE_ID=$(uuidgen | tr '[:upper:]' '[:lower:]')
 echo "$SCOPE_ID" > "$SCRIPT_DIR/.scope_id"
+
+ROLE_READ_ID=$(uuidgen | tr '[:upper:]' '[:lower:]')
+ROLE_WRITE_ID=$(uuidgen | tr '[:upper:]' '[:lower:]')
+echo "$ROLE_READ_ID" > "$SCRIPT_DIR/.role_read_id"
+echo "$ROLE_WRITE_ID" > "$SCRIPT_DIR/.role_write_id"
 
 # ── 1.5 Configure the app via Microsoft Graph API ─────────────
 # We use a single PATCH call to set everything at once:
@@ -105,6 +110,7 @@ echo "$SCOPE_ID" > "$SCRIPT_DIR/.scope_id"
 #   - groupMembershipClaims: SecurityGroup (include groups in JWT)
 #   - identifierUris: api://<client-id> (Application ID URI)
 #   - oauth2PermissionScopes: the access_as_user scope
+#   - appRoles: the Service-to-Service roles (Read/Write)
 
 info "Configuring app registration via Microsoft Graph API..."
 info "  → Setting SPA redirect URI (PKCE-compatible)"
@@ -112,6 +118,7 @@ info "  → Setting token version to v2"
 info "  → Enabling security group claims in tokens"
 info "  → Setting Application ID URI"
 info "  → Creating 'access_as_user' API scope"
+info "  → Creating App Roles for Service Principals"
 
 az rest --method PATCH \
     --url "https://graph.microsoft.com/v1.0/applications/$APP_OBJECT_ID" \
@@ -135,6 +142,26 @@ az rest --method PATCH \
                 }
             ]
         },
+        \"appRoles\": [
+            {
+                \"allowedMemberTypes\": [\"Application\"],
+                \"description\": \"$ROLE_READ_ALL_DESC\",
+                \"displayName\": \"$ROLE_READ_ALL_DESC\",
+                \"id\": \"$ROLE_READ_ID\",
+                \"isEnabled\": true,
+                \"origin\": \"Application\",
+                \"value\": \"$ROLE_READ_ALL\"
+            },
+            {
+                \"allowedMemberTypes\": [\"Application\"],
+                \"description\": \"$ROLE_WRITE_ALL_DESC\",
+                \"displayName\": \"$ROLE_WRITE_ALL_DESC\",
+                \"id\": \"$ROLE_WRITE_ID\",
+                \"isEnabled\": true,
+                \"origin\": \"Application\",
+                \"value\": \"$ROLE_WRITE_ALL\"
+            }
+        ],
         \"identifierUris\": [\"api://$CLIENT_ID\"],
         \"groupMembershipClaims\": \"SecurityGroup\"
     }" \

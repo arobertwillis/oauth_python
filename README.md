@@ -101,33 +101,48 @@ docker run -p 8000:8000 --env-file .env oauth_python_api
 - **[Azure Setup Guide](docs/azure_setup.md)** — Manual step-by-step Azure configuration
 - **[JWT Security Guide](docs/jwt_security.md)** — How JWT authentication works and security practices
 
-## Project Structure
+## 5. Client Credentials Flow (Service-to-Service)
 
+If you are building an automated script or background job that needs to access this API, it cannot use a browser to log in. Instead, it must authenticate as an application using the **Client Credentials Flow**.
+
+Our setup scripts automatically create a second "Client" App Registration, assign it the correct **App Roles** (`Items.Write.All`), and generate a `.env.client` file with the client credentials.
+
+### Example Clients
+
+We have provided two complete example clients that read from `.env.client`, request a JWT from Azure AD, and call the API.
+
+#### Python Client
+```bash
+cd clients/python
+pip install -r requirements.txt
+python cli.py
 ```
+
+#### C# Client
+```bash
+cd clients/csharp/CliClient
+dotnet run
+```
+
+---
+
+## 6. Project Structure
+
+```text
 oauth_python/
 ├── app/
-│   ├── __init__.py          # Package init
-│   ├── config.py            # Settings from environment variables
-│   ├── auth.py              # JWT validation + group authorisation
-│   ├── main.py              # FastAPI app setup
-│   └── routes.py            # API endpoints
-├── docs/
-│   ├── azure_setup.md       # Manual Azure configuration guide
-│   └── jwt_security.md      # JWT security documentation
-├── setup/
-│   ├── config.sh            # Shared configuration for setup scripts
-│   ├── setup_all.sh         # Run all setup steps at once
-│   ├── 01_create_app_registration.sh
-│   ├── 02_create_groups.sh
-│   ├── 03_create_users.sh
-│   ├── 04_assign_memberships.sh
-│   ├── 05_generate_env.sh
-│   ├── teardown.sh          # Remove all Azure resources
-│   └── README.md            # Setup scripts documentation
-├── .env.example             # Environment variable template
-├── .gitignore               # Prevents committing secrets
-├── requirements.txt         # Python dependencies
-└── README.md                # This file
+│   ├── main.py              # FastAPI application
+│   ├── auth.py              # Authentication & Authorization logic
+│   ├── routes.py            # API endpoints
+│   └── config.py            # Environment variables
+├── clients/
+│   ├── python/              # Python CLI Client example
+│   └── csharp/              # C# CLI Client example
+├── setup/                   # Automation scripts for Azure AD
+├── docs/                    # Architectural documentation
+├── .env                     # Server configuration (generated)
+├── .env.client              # Client configuration (generated)
+└── requirements.txt         # Server Python dependencies
 ```
 
 ## Cost
