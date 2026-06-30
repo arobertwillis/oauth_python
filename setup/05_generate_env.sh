@@ -34,18 +34,22 @@ load_id() {
     cat "$file"
 }
 
-CLIENT_ID=$(load_id ".app_client_id")
+API_APP_ID=$(load_id ".app_client_id")
 READER_GROUP_ID=$(load_id ".reader_group_id")
 WRITER_GROUP_ID=$(load_id ".writer_group_id")
 
 # Load Client App IDs
-if [[ -f "$SCRIPT_DIR/.client_app_client_id" ]]; then
-    CLI_CLIENT_ID=$(load_id ".client_app_client_id")
-    CLI_CLIENT_SECRET=$(load_id ".client_secret" || echo "")
-else
-    CLI_CLIENT_ID=""
-    CLI_CLIENT_SECRET=""
+if [[ ! -f "$SCRIPT_DIR/.client_app_client_id" ]]; then
+    error "File '$SCRIPT_DIR/.client_app_client_id' not found. Did you run 06_create_client_app.sh?"
+    exit 1
 fi
+CLIENT_ID=$(cat "$SCRIPT_DIR/.client_app_client_id")
+
+if [[ ! -f "$SCRIPT_DIR/.cert_thumbprint" ]]; then
+    error "File '$SCRIPT_DIR/.cert_thumbprint' not found. Did you run 07_configure_certificates.sh?"
+    exit 1
+fi
+CERT_THUMBPRINT=$(cat "$SCRIPT_DIR/.cert_thumbprint")
 
 # Get tenant ID directly from Azure CLI
 TENANT_ID=$(get_tenant_id)
@@ -54,11 +58,12 @@ if [[ -z "$TENANT_ID" ]]; then
 fi
 
 info "Collected all configuration values:"
-info "  Tenant ID:       $TENANT_ID"
-info "  API Client ID:   $CLIENT_ID"
-info "  Reader Group ID: $READER_GROUP_ID"
-info "  Writer Group ID: $WRITER_GROUP_ID"
-info "  CLI Client ID:   $CLI_CLIENT_ID"
+ok "  Tenant ID:       $TENANT_ID"
+ok "  API Client ID:   $API_APP_ID"
+ok "  Reader Group ID: $READER_GROUP_ID"
+ok "  Writer Group ID: $WRITER_GROUP_ID"
+ok "  CLI Client ID:   $CLIENT_ID"
+ok "  Cert Thumbprint: $CERT_THUMBPRINT"
 
 # ── Generate .env file ────────────────────────────────────────
 ENV_FILE="$REPO_ROOT/$ENV_OUTPUT_FILE"
@@ -86,8 +91,8 @@ if [[ -n "$ENV_FILE" ]]; then
 # Your Azure Entra ID tenant ID (Directory ID)
 AZURE_TENANT_ID=$TENANT_ID
 
-# The Application (client) ID from your App Registration
-AZURE_CLIENT_ID=$CLIENT_ID
+# The Client ID (Application ID) of your App Registration
+AZURE_CLIENT_ID=$API_APP_ID
 
 # Object ID of the "api-readers" security group
 AZURE_READER_GROUP_ID=$READER_GROUP_ID
@@ -99,9 +104,8 @@ EOF
 fi
 
 # ── Generate .env.client file ─────────────────────────────────
-if [[ -n "$CLI_CLIENT_ID" && -n "$CLI_CLIENT_SECRET" ]]; then
+if [[ -n "$CLIENT_ID" && -n "$CERT_THUMBPRINT" ]]; then
     CLIENT_ENV_FILE="$REPO_ROOT/.env.client"
-    info "Writing .env.client file to $CLIENT_ENV_FILE..."
     
     cat > "$CLIENT_ENV_FILE" << EOF
 # ============================================================
@@ -113,13 +117,13 @@ if [[ -n "$CLI_CLIENT_ID" && -n "$CLI_CLIENT_SECRET" ]]; then
 AZURE_TENANT_ID=$TENANT_ID
 
 # The Client ID of the automated CLI app
-CLIENT_ID=$CLI_CLIENT_ID
+CLIENT_ID=$CLIENT_ID
 
-# The Client Secret for the automated CLI app
-CLIENT_SECRET=$CLI_CLIENT_SECRET
+# The Certificate Thumbprint for the automated CLI app
+CERT_THUMBPRINT=$CERT_THUMBPRINT
 
 # The API's Application ID URI (the scope the client requests)
-API_SCOPE=api://$CLIENT_ID/.default
+API_SCOPE=api://$API_APP_ID/.default
 EOF
     ok ".env.client file generated successfully"
 fi

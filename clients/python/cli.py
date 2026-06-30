@@ -5,7 +5,7 @@ import msal
 import requests
 from dotenv import load_dotenv
 
-# Load credentials from .env.client (located at the repo root)
+# Load credentials from .env.calient (located at the repo root)
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 ENV_CLIENT_PATH = os.path.join(REPO_ROOT, ".env.client")
 
@@ -18,7 +18,7 @@ load_dotenv(ENV_CLIENT_PATH)
 
 TENANT_ID = os.environ["AZURE_TENANT_ID"]
 CLIENT_ID = os.environ["CLIENT_ID"]
-CLIENT_SECRET = os.environ["CLIENT_SECRET"]
+CERT_THUMBPRINT = os.environ.get("CERT_THUMBPRINT")
 API_SCOPE = os.environ["API_SCOPE"]
 
 AUTHORITY = f"https://login.microsoftonline.com/{TENANT_ID}"
@@ -28,12 +28,24 @@ print("=============================================")
 print("  Python CLI Client (Service-to-Service)")
 print("=============================================\n")
 
-# 1. Initialize MSAL Confidential Client
-# A "Confidential Client" is an application that can securely hold a secret.
+# Load private key from .certs/
+CERT_PATH = os.path.join(REPO_ROOT, ".certs", "oauth_python_cli_full.pem")
+if not os.path.exists(CERT_PATH):
+    print(f"Error: {CERT_PATH} not found.")
+    print("Please run the setup scripts (setup/07_configure_certificates.sh) to generate it.")
+    sys.exit(1)
+
+with open(CERT_PATH, "r") as f:
+    private_key = f.read()
+
+# 1. Initialize MSAL Confidential Client using a Certificate
 app = msal.ConfidentialClientApplication(
     CLIENT_ID,
     authority=AUTHORITY,
-    client_credential=CLIENT_SECRET,
+    client_credential={
+        "thumbprint": CERT_THUMBPRINT,
+        "private_key": private_key
+    }
 )
 
 # 2. Request a Token using the Client Credentials Flow

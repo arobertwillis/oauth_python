@@ -68,25 +68,7 @@ echo "$CLIENT_SP_OBJECT_ID" > "$SCRIPT_DIR/.client_sp_object_id"
 ok "  Service Principal ID: $CLIENT_SP_OBJECT_ID"
 
 # ── 6.3 Generate Client Secret ────────────────────────────────
-info "Generating Client Secret..."
-
-# Note: In production, consider using Managed Identities or Certificates
-SECRET_JSON=$(az ad app credential reset \
-    --id "$CLIENT_APP_OBJECT_ID" \
-    --display-name "AutomatedClientSecret" \
-    --append \
-    --query "{password:password}" \
-    --output json 2>/dev/null || echo "{}")
-
-CLIENT_SECRET=$(echo "$SECRET_JSON" | jq -r '.password')
-
-if [[ "$CLIENT_SECRET" == "null" || -z "$CLIENT_SECRET" ]]; then
-    warn "Could not generate a new secret (one may already exist). You might need to reset it."
-    CLIENT_SECRET="<SECRET_ALREADY_EXISTS_OR_GENERATION_FAILED>"
-else
-    echo "$CLIENT_SECRET" > "$SCRIPT_DIR/.client_secret"
-    ok "  Client Secret generated successfully."
-fi
+  # We no longer generate a secret here; it is handled by 07_configure_certificates.sh
 
 # ── 6.4 Grant App Roles to the Client ─────────────────────────
 info "Granting App Roles (Application Permissions) to the Client..."
@@ -117,6 +99,5 @@ echo -e "${BOLD}${GREEN}  ✓ Client App Created & Configured${NC}"
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 echo -e "  ${BOLD}Client App ID:${NC}     $EXISTING_APP_ID"
-echo -e "  ${BOLD}Client Secret:${NC}     (Saved securely for .env generation)"
 echo -e "  ${BOLD}Granted Role:${NC}      $ROLE_WRITE_ALL"
 echo ""

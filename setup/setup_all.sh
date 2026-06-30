@@ -78,6 +78,7 @@ bash "$SCRIPT_DIR/02_create_groups.sh"
 bash "$SCRIPT_DIR/03_create_users.sh"
 bash "$SCRIPT_DIR/04_assign_memberships.sh"
 bash "$SCRIPT_DIR/06_create_client_app.sh"
+bash "$SCRIPT_DIR/07_configure_certificates.sh"
 bash "$SCRIPT_DIR/05_generate_env.sh"
 
 # ── Final Summary ─────────────────────────────────────────────

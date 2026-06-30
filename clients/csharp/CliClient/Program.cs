@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -29,19 +30,31 @@ namespace CliClient
 
             string tenantId = Environment.GetEnvironmentVariable("AZURE_TENANT_ID")!;
             string clientId = Environment.GetEnvironmentVariable("CLIENT_ID")!;
-            string clientSecret = Environment.GetEnvironmentVariable("CLIENT_SECRET")!;
+            string certThumbprint = Environment.GetEnvironmentVariable("CERT_THUMBPRINT")!;
             string apiScope = Environment.GetEnvironmentVariable("API_SCOPE")!;
 
             string authority = $"https://login.microsoftonline.com/{tenantId}";
             string apiBaseUrl = "http://localhost:8000/api";
 
+            // Load Certificate from .certs/
+            string certPath = Path.Combine(repoRoot, ".certs", "oauth_python_cli_full.pem");
+            if (!File.Exists(certPath))
+            {
+                Console.WriteLine($"Error: Certificate not found at {certPath}");
+                Console.WriteLine("Please run setup/07_configure_certificates.sh");
+                return;
+            }
+
+            // In .NET 5+, we can create an X509Certificate2 directly from a PEM file containing both the cert and the private key
+            var certificate = X509Certificate2.CreateFromPemFile(certPath);
+
             Console.WriteLine("=============================================");
             Console.WriteLine("  C# CLI Client (Service-to-Service)");
             Console.WriteLine("=============================================\n");
 
-            // 1. Initialize MSAL Confidential Client
+            // 1. Initialize MSAL Confidential Client using Certificate
             IConfidentialClientApplication app = ConfidentialClientApplicationBuilder.Create(clientId)
-                .WithClientSecret(clientSecret)
+                .WithCertificate(certificate)
                 .WithAuthority(new Uri(authority))
                 .Build();
 

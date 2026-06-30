@@ -13,6 +13,7 @@ ENV/
 # Environment variables (NEVER commit secrets)
 .env
 .env.client
+.certs/
 
 # C# / .NET
 [Bb]in/
