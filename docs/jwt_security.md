@@ -177,19 +177,22 @@ WHAT they can do) using Azure security groups.
 | `api-writers` | ✅ | ✅ |
 | Neither group | ❌ | ❌ |
 
-### Why Groups Instead of App Roles?
+### Groups vs App Roles
 
-| Feature | Security Groups | App Roles |
+This API uses **both** Security Groups and App Roles to authorise requests, depending on *who* or *what* is making the request:
+
+| Feature | Security Groups (Humans) | App Roles (Machines) |
 |---|---|---|
-| **Cost** | Free (Entra ID Free tier) | Free (Entra ID Free tier) |
-| **Management** | Azure Portal / CLI | App Registration manifest |
-| **Dynamic membership** | Supported (with P1 licence) | Not supported |
-| **Visible in token** | Yes (`groups` claim) | Yes (`roles` claim) |
-| **Familiar to admins** | ✅ Widely understood | ❌ Developer-facing concept |
+| **Used for** | Human users (Swagger UI, Web Apps) | Automated scripts, daemons, background jobs |
+| **Token Claim** | `groups` claim | `roles` claim |
+| **Management** | Azure Portal / Azure CLI | App Registration manifest |
+| **Flow** | Authorization Code Flow (PKCE) | Client Credentials Flow |
 
-We chose **security groups** because they're universally understood by Azure
-administrators, don't require manifest changes to add new groups, and work
-identically on the free tier.
+**Why the split?**
+- **Security Groups** are universally understood by administrators for managing human access, and work identically on the free tier.
+- **App Roles (Application Permissions)** are the OAuth2 standard for machine-to-machine authentication (Client Credentials Flow). When a script requests a token as a "Service Principal", Azure AD issues the token with the `roles` claim rather than the `groups` claim.
+
+Our FastAPI authorization logic (`app/auth.py`) is built to seamlessly accept EITHER a valid Group Object ID OR a valid App Role, allowing the API to serve both human users and automated scripts simultaneously.
 
 ---
 

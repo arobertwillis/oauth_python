@@ -19,7 +19,8 @@ to authenticate users for the FastAPI OAuth Python API.
 8. [Assign Users to Groups](#8-assign-users-to-groups)
 9. [Assign Groups to the Enterprise App](#9-assign-groups-to-the-enterprise-app)
 10. [Collect Configuration Values](#10-collect-configuration-values)
-11. [Troubleshooting](#11-troubleshooting)
+11. [Setup Service-to-Service Authentication (Optional)](#11-setup-service-to-service-authentication-optional)
+12. [Troubleshooting](#12-troubleshooting)
 
 ---
 
@@ -417,9 +418,35 @@ echo "AZURE_READER_GROUP_ID=$(az ad group show --group 'api-readers' --query id 
 echo "AZURE_WRITER_GROUP_ID=$(az ad group show --group 'api-writers' --query id --output tsv)"
 ```
 
+## 11. Setup Service-to-Service Authentication (Optional)
+
+If you have automated scripts that need to access the API without human interaction, you need to configure App Roles and a Client Application.
+
+### 1. Create App Roles on the API Application
+1. Go to your `OAuth Python API` app registration → **App roles**.
+2. Click **+ Create app role**.
+3. Fill in:
+   - **Display name:** `Items.Read.All`
+   - **Allowed member types:** `Applications`
+   - **Value:** `Items.Read.All`
+   - **Description:** `Allows reading items`
+   - **Do you want to enable this app role:** Yes
+4. Repeat to create `Items.Write.All`.
+
+### 2. Create the Client Application
+1. Go to **App registrations** → **+ New registration**.
+2. Name it `OAuth Python API - CLI Client` and click **Register**.
+3. Go to **Certificates & secrets** and create a **New client secret**. Save the value immediately.
+4. Go to **API permissions** → **+ Add a permission** → **My APIs**.
+5. Select `OAuth Python API` → **Application permissions**.
+6. Check `Items.Write.All` and click **Add permissions**.
+7. Click **Grant admin consent for [your tenant]** to approve the permission.
+
+You will need the **Tenant ID**, the Client Application's **Client ID**, and the **Client Secret** to authenticate your scripts using the Client Credentials flow.
+
 ---
 
-## 11. Troubleshooting
+## 12. Troubleshooting
 
 ### "AADSTS50011: The redirect URI does not match"
 
