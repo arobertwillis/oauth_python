@@ -41,7 +41,7 @@ This document outlines the requirements for the Master Configuration file upload
 - **REQ-7.2:** The system MUST allow users to easily restore/rollback a file to any of its previous versions if a deployment or user change breaks the system.
 
 ## 8. Runtime Execution & Component Isolation
-- **REQ-8.1:** Configuration files MUST be logically organized into folders dedicated to particular system components, while allowing for shared files that are utilized by multiple components.
+- **REQ-8.1:** Configuration files MUST be logically organized into folders dedicated to particular system components, while allowing for shared files that are utilized by multiple components. Specifically, the system MUST support the following initial component folders: `cepe/`, `wasabi/`, `gvmerge/`, and `shared/`.
 - **REQ-8.2:** System components MUST NOT run directly against the "master configuration" folder. This guarantees that live updates to the master configuration do not impact running batches or cause inconsistencies mid-execution.
 - **REQ-8.3:** A background synchronization job (sync job) MUST be implemented to copy the master configuration down to a local, dated folder (e.g., timestamped snapshot) for actual use by the system components during runtime.
 - **REQ-8.4:** When synchronizing a component's configuration, the REST API MUST support bulk downloading (e.g., downloading an entire component folder) so the client does not have to explicitly list every required file.
