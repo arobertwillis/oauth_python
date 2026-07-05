@@ -47,3 +47,10 @@ This document outlines the requirements for the Master Configuration file upload
 - **REQ-8.3:** A background synchronization job (sync job) MUST be implemented to copy the master configuration down to a local, dated folder (e.g., timestamped snapshot) for actual use by the system components during runtime.
 - **REQ-8.4:** When synchronizing a component's configuration, the REST API MUST support bulk downloading (e.g., downloading an entire component folder) so the client does not have to explicitly list every required file.
 - **REQ-8.5:** Unlike component-specific files, shared configuration files MUST be explicitly requested by the client during the synchronization process.
+
+## 9. Tool Configuration (Self-Configuration)
+- **REQ-9.1:** The `master_configuration` tool itself MUST be configurable via environment variables (or a `.env` file) to dictate its operational parameters without modifying source code.
+- **REQ-9.2:** The tool MUST allow administrators to dynamically set the location of the master configuration repository (`MASTER_CONFIG_DIR`) and the validation schemas directory (`SCHEMAS_DIR`).
+- **REQ-9.3:** The tool MUST expose security and authentication settings, including Azure AD Tenant ID, Client ID, and whether API authentication is strictly enforced.
+- **REQ-9.4:** The tool MUST support configuring the location of the schema mapping definitions (e.g., `SCHEMA_MAPPING_FILE`), which map filename regex patterns to specific validation schemas.
+- **REQ-9.5:** If pushing to an upstream Git remote is enabled, the tool MUST allow configuration of Git credentials (e.g., `GIT_PAT` or `GIT_SSH_KEY_PATH`).
