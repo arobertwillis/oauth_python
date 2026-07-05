@@ -13,6 +13,7 @@ This document outlines the requirements for the Master Configuration file upload
 - **REQ-2.1:** The system MUST support uploading files to arbitrary subdirectories within the master folder.
 - **REQ-2.2:** The upload mechanism MUST be flexible enough to handle different types of configuration files.
 - **REQ-2.3:** It MUST be possible to upload a file *without* assigning a specific validation schema (schema-less upload). In this case, the system should only perform basic syntax checking (e.g., ensuring valid JSON or YAML) if applicable.
+- **REQ-2.4:** The root of the master configuration folder MUST contain a top-level configuration file (e.g., `master_configuration.json`) that dictates global configuration parameters.
 
 ## 3. Schema Validation & Recognition
 - **REQ-3.1:** The system MUST support validating uploaded files against predefined schemas (e.g., JSON Schema) to prevent incorrect files from being uploaded.
