@@ -56,10 +56,11 @@ This document outlines the requirements for the Master Configuration file upload
 ## 8. Runtime Execution & Component Isolation
 - **REQ-8.1:** Configuration files MUST be logically organized into folders dedicated to particular system components, while allowing for shared files that are utilized by multiple components. Specifically, the system MUST support the following initial component folders: `cepe/`, `wasabi/`, `gvmerge/`, and `shared/`.
 - **REQ-8.2:** System components MUST NOT run directly against the "master configuration" folder. This guarantees that live updates to the master configuration do not impact running batches or cause inconsistencies mid-execution.
-- **REQ-8.3:** A background synchronization job (sync job) MUST be implemented to copy the master configuration down to a local, dated folder (e.g., timestamped snapshot) for actual use by the system components during runtime.
+- **REQ-8.3:** At the start of each batch run, the client MUST download the component's configuration from the REST API into a local, dated folder (e.g., `config/cepe/2026-07-05T14-00-00/`). This dated snapshot becomes the immutable configuration for that batch run.
 - **REQ-8.4:** When synchronizing a component's configuration, the REST API MUST support bulk downloading (e.g., downloading an entire component folder) so the client does not have to explicitly list every required file.
 - **REQ-8.5:** Unlike component-specific files, shared configuration files MUST be explicitly requested by the client during the synchronization process.
 - **REQ-8.6:** The system MUST define a snapshot retention policy (e.g., number of dated snapshots to keep) and automatically prune older snapshots to prevent unbounded disk usage.
+- **REQ-8.7:** Once a dated snapshot has been created for a batch, the batch MUST read configuration exclusively from that snapshot for its entire duration, ensuring full consistency even if the master configuration is updated mid-run.
 
 ## 9. Tool Configuration (Self-Configuration)
 - **REQ-9.1:** The `master_configuration` tool itself MUST be configurable via environment variables (or a `.env` file) to dictate its operational parameters without modifying source code.
@@ -77,3 +78,4 @@ This document outlines the requirements for the Master Configuration file upload
 - **REQ-11.2:** The client library MUST support all core operations: uploading files, downloading individual files, bulk downloading a component folder, listing files, and querying file history.
 - **REQ-11.3:** The client library MUST handle authentication (e.g., accepting an Azure AD token or credentials) transparently, so consuming applications do not need to manage raw HTTP headers.
 - **REQ-11.4:** The client library MUST be kept minimal with few dependencies, suitable for embedding in batch jobs, CI/CD pipelines, and other Python-based components.
+- **REQ-11.5:** The client library MUST provide a high-level `sync` operation that, given a component name, downloads the full component folder (plus any explicitly listed shared files) into a local dated directory and returns the path for the batch to use.
