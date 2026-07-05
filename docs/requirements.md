@@ -8,17 +8,22 @@ This document outlines the requirements for the Master Configuration file upload
 - **REQ-1.3:** All file modifications (uploads, updates, deletions) MUST be automatically backed up by committing them to the local Git repository.
 - **REQ-1.4:** The Git commit history MUST record the actual user who uploaded or modified the file (e.g., by extracting the user's name and email from their Azure AD JWT authentication token).
 - **REQ-1.5:** The system MUST surface audit metadata in the UI/API for every file, prominently displaying exactly when it was last updated and by whom.
+- **REQ-1.6:** File uploads MUST be transactional: if the Git commit fails after the file has been written to disk, the file write MUST be rolled back so the working tree remains consistent with the Git history.
+- **REQ-1.7:** Git MUST be used to manage concurrency. Concurrent modifications to the same file MUST be serialized through Git's commit mechanism, ensuring that no write is silently lost.
+- **REQ-1.8:** Deleted files MUST remain fully recoverable from the Git history. The system MUST NOT perform hard resets or history-rewriting operations (e.g., `git filter-branch`, force-push) that would permanently remove deleted file data.
 
 ## 2. Flexible File Management
 - **REQ-2.1:** The system MUST support uploading files to arbitrary subdirectories within the master folder.
 - **REQ-2.2:** The upload mechanism MUST be flexible enough to handle different types of configuration files.
 - **REQ-2.3:** It MUST be possible to upload a file *without* assigning a specific validation schema (schema-less upload). In this case, the system should only perform basic syntax checking (e.g., ensuring valid JSON or YAML) if applicable.
-- **REQ-2.4:** The root of the master configuration folder MUST contain a top-level configuration file (e.g., `master_configuration.json`) that dictates global configuration parameters.
+- **REQ-2.4:** The root of the master configuration folder MUST contain a top-level configuration file (e.g., `master_configuration.json`) that dictates global configuration parameters including: the environment name, a configuration version identifier, the list of registered component folders, and for each component the list of shared files it depends on.
+- **REQ-2.5:** Critical system files (e.g., `master_configuration.json`) MUST be protected from accidental deletion via the API or UI. The system MUST reject delete requests for protected files with a clear error message.
 
 ## 3. Schema Validation & Recognition
 - **REQ-3.1:** The system MUST support validating uploaded files against predefined schemas (e.g., JSON Schema) to prevent incorrect files from being uploaded.
 - **REQ-3.2:** The schemas MUST be maintained in a dedicated location (`data/schemas/`) separate from the master configurations.
 - **REQ-3.3:** The system MUST be able to automatically recognize and assign a schema to a file based on its filename. This mapping should be configurable (e.g., mapping `*.settings.json` to the `app_settings` schema).
+- **REQ-3.4:** The system MUST provide REST API endpoints and UI views to manage (create, update, delete, list) schemas, so that schemas can be maintained without direct filesystem access.
 
 ## 4. Deep / Custom Validation
 - **REQ-4.1:** The system MUST support the creation of custom schema validation classes (Python plugins).
@@ -39,6 +44,8 @@ This document outlines the requirements for the Master Configuration file upload
 - **REQ-6.3:** The system MUST provide a mechanism to back-sync and update a non-production environment using configuration data from the production environment.
 - **REQ-6.4:** The deployment mechanism MUST detect conflicts between deployment releases and end-user modifications. It MUST explicitly fail and prevent overriding any configuration file that has been modified directly by an end user in the target environment.
 - **REQ-6.5:** The system MUST provide a configuration comparison tool (diffing mechanism) to detect changes, surface conflicts, and allow administrators to safely manage these differences prior to deployment.
+- **REQ-6.6:** When a conflict is detected (REQ-6.4), the system MUST provide a resolution mechanism allowing administrators to explicitly accept the incoming change, keep the existing version, or perform a manual merge before the deployment can proceed.
+- **REQ-6.7:** The system MUST support bulk uploading of an entire component folder in a single operation to facilitate automated deployments.
 
 ## 7. History & Rollback
 - **REQ-7.1:** The system MUST provide an interface (API and UI) to view the historical versions of a specific configuration file by querying the Git history.
@@ -50,6 +57,7 @@ This document outlines the requirements for the Master Configuration file upload
 - **REQ-8.3:** A background synchronization job (sync job) MUST be implemented to copy the master configuration down to a local, dated folder (e.g., timestamped snapshot) for actual use by the system components during runtime.
 - **REQ-8.4:** When synchronizing a component's configuration, the REST API MUST support bulk downloading (e.g., downloading an entire component folder) so the client does not have to explicitly list every required file.
 - **REQ-8.5:** Unlike component-specific files, shared configuration files MUST be explicitly requested by the client during the synchronization process.
+- **REQ-8.6:** The system MUST define a snapshot retention policy (e.g., number of dated snapshots to keep) and automatically prune older snapshots to prevent unbounded disk usage.
 
 ## 9. Tool Configuration (Self-Configuration)
 - **REQ-9.1:** The `master_configuration` tool itself MUST be configurable via environment variables (or a `.env` file) to dictate its operational parameters without modifying source code.
