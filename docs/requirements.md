@@ -7,6 +7,7 @@ This document outlines the requirements for the Master Configuration file upload
 - **REQ-1.2:** The master folder MUST be a file-based Git repository.
 - **REQ-1.3:** All file modifications (uploads, updates, deletions) MUST be automatically backed up by committing them to the local Git repository.
 - **REQ-1.4:** The Git commit history MUST record the actual user who uploaded or modified the file (e.g., by extracting the user's name and email from their Azure AD JWT authentication token).
+- **REQ-1.5:** The system MUST surface audit metadata in the UI/API for every file, prominently displaying exactly when it was last updated and by whom.
 
 ## 2. Flexible File Management
 - **REQ-2.1:** The system MUST support uploading files to arbitrary subdirectories within the master folder.
@@ -33,3 +34,7 @@ This document outlines the requirements for the Master Configuration file upload
 - **REQ-6.3:** The system MUST provide a mechanism to back-sync and update a non-production environment using configuration data from the production environment.
 - **REQ-6.4:** The deployment mechanism MUST detect conflicts between deployment releases and end-user modifications. It MUST explicitly fail and prevent overriding any configuration file that has been modified directly by an end user in the target environment.
 - **REQ-6.5:** The system MUST provide a configuration comparison tool (diffing mechanism) to detect changes, surface conflicts, and allow administrators to safely manage these differences prior to deployment.
+
+## 7. History & Rollback
+- **REQ-7.1:** The system MUST provide an interface (API and UI) to view the historical versions of a specific configuration file by querying the Git history.
+- **REQ-7.2:** The system MUST allow users to easily restore/rollback a file to any of its previous versions if a deployment or user change breaks the system.
