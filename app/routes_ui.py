@@ -4,32 +4,37 @@ from fastapi.responses import HTMLResponse
 import os
 from pathlib import Path
 
-from app.services.schema_service import schema_service
+from app.services.schema_service import SchemaService
+from app.config import get_settings
 
 router = APIRouter(tags=["UI"])
 
 # Setup Jinja2 templates directory
 templates = Jinja2Templates(directory="app/ui/templates")
 
-CONFIG_DIR = Path("data/master_config").resolve()
-
 @router.get("/config", response_class=HTMLResponse)
 async def config_dashboard(request: Request):
     """
     Renders the Master Configuration UI dashboard.
-    Note: For simplicity in this demo, the UI doesn't strictly enforce Azure AD login on the initial page load, 
-    but the REST API calls made from the UI *do* require a token if security is enabled.
     """
+    settings = get_settings()
+    config_dir = Path(settings.master_config_dir).resolve()
+    
     files = []
-    if CONFIG_DIR.exists():
-        for root, _, filenames in os.walk(CONFIG_DIR):
+    if config_dir.exists():
+        for root, dirs, filenames in os.walk(config_dir):
+            dirs[:] = [d for d in dirs if d != ".git"]
             for filename in filenames:
-                if filename == ".gitkeep" or filename == ".git":
+                if filename.startswith(".git"):
                     continue
                 abs_path = Path(root) / filename
-                rel_path = abs_path.relative_to(CONFIG_DIR)
+                rel_path = abs_path.relative_to(config_dir)
                 files.append(str(rel_path))
     
+    schema_service = SchemaService(
+        schemas_dir=settings.schemas_dir,
+        mapping_file=settings.schema_mapping_file,
+    )
     schema_service.load_schemas()
     schemas = schema_service.get_available_schemas()
     

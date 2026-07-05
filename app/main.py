@@ -17,6 +17,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 
 from app.auth import azure_scheme
 from app.config import get_settings
@@ -86,6 +87,10 @@ def create_app() -> FastAPI:
             "scopes": settings.openapi_scope,
         },
     )
+
+    # ── GZip Middleware ──
+    # Automatically compresses responses > 500 bytes for faster single-file downloads
+    application.add_middleware(GZipMiddleware, minimum_size=500)
 
     # ── CORS Middleware ──
     # Allow requests from local development frontends.
