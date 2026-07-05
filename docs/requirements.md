@@ -11,6 +11,7 @@ This document outlines the requirements for the Master Configuration file upload
 - **REQ-1.6:** File uploads MUST be transactional: if the Git commit fails after the file has been written to disk, the file write MUST be rolled back so the working tree remains consistent with the Git history.
 - **REQ-1.7:** Git MUST be used to manage concurrency. Concurrent modifications to the same file MUST be serialized through Git's commit mechanism, ensuring that no write is silently lost.
 - **REQ-1.8:** Deleted files MUST remain fully recoverable from the Git history. The system MUST NOT perform hard resets or history-rewriting operations (e.g., `git filter-branch`, force-push) that would permanently remove deleted file data.
+- **REQ-1.9:** The master configuration Git repository MUST reside on a filesystem that is independently backed up (e.g., via scheduled snapshots, replication, or enterprise backup tooling). The system documentation MUST clearly state this as a deployment prerequisite.
 
 ## 2. Flexible File Management
 - **REQ-2.1:** The system MUST support uploading files to arbitrary subdirectories within the master folder.
@@ -18,6 +19,7 @@ This document outlines the requirements for the Master Configuration file upload
 - **REQ-2.3:** It MUST be possible to upload a file *without* assigning a specific validation schema (schema-less upload). In this case, the system should only perform basic syntax checking (e.g., ensuring valid JSON or YAML) if applicable.
 - **REQ-2.4:** The root of the master configuration folder MUST contain a top-level configuration file (e.g., `master_configuration.json`) that dictates global configuration parameters including: the environment name, a configuration version identifier, the list of registered component folders, and for each component the list of shared files it depends on.
 - **REQ-2.5:** Critical system files (e.g., `master_configuration.json`) MUST be protected from accidental deletion via the API or UI. The system MUST reject delete requests for protected files with a clear error message.
+- **REQ-2.6:** The system MUST enforce a maximum file upload size of 1 GB. Uploads exceeding this limit MUST be rejected with a clear error message before any processing occurs.
 
 ## 3. Schema Validation & Recognition
 - **REQ-3.1:** The system MUST support validating uploaded files against predefined schemas (e.g., JSON Schema) to prevent incorrect files from being uploaded.
@@ -69,3 +71,9 @@ This document outlines the requirements for the Master Configuration file upload
 ## 10. Testing & Quality Assurance
 - **REQ-10.1:** The system MUST have full automated test coverage specifically targeting the REST API layer.
 - **REQ-10.2:** The automated test suite MUST verify all upload paths, including creating and validating test configuration files *with* a strict schema (both valid and invalid payloads) and files uploaded *without* a specific schema.
+
+## 11. Python Client Library
+- **REQ-11.1:** The solution MUST provide a lightweight Python client library, packaged and distributable as a `pip` installable package, that wraps the REST API for programmatic use by other systems and components.
+- **REQ-11.2:** The client library MUST support all core operations: uploading files, downloading individual files, bulk downloading a component folder, listing files, and querying file history.
+- **REQ-11.3:** The client library MUST handle authentication (e.g., accepting an Azure AD token or credentials) transparently, so consuming applications do not need to manage raw HTTP headers.
+- **REQ-11.4:** The client library MUST be kept minimal with few dependencies, suitable for embedding in batch jobs, CI/CD pipelines, and other Python-based components.
