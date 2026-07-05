@@ -62,12 +62,48 @@ def _create_test_app() -> FastAPI:
     """Create a minimal FastAPI app with only the config routes (no Azure AD)."""
     test_app = FastAPI()
     test_app.include_router(routes_config.router)
+    
+    # Override Azure AD dependencies
+    from app.auth import require_read_access, require_write_access, get_current_user
+    from fastapi_azure_auth.user import User
+    
+    def mock_read(): return None
+    def mock_write(): return None
+    def mock_user(): 
+        return User(
+            name="API User", 
+            preferred_username="api@local", 
+            oid="123", 
+            claims={}, 
+            scp="", 
+            tid="123", 
+            aud="123", 
+            iss="123", 
+            iat=0, 
+            nbf=0, 
+            exp=0, 
+            sub="123",
+            ver="1.0",
+            access_token="mock_token"
+        )
+        
+    from app.routes_config import read_access_dep, write_access_dep
+        
+    test_app.dependency_overrides[read_access_dep] = mock_read
+    test_app.dependency_overrides[write_access_dep] = mock_write
+    test_app.dependency_overrides[get_current_user] = mock_user
+    
     return test_app
 
 
 @pytest.fixture(autouse=True)
 def reset_services():
     """Reset service singletons and temp directories before each test."""
+    os.environ["MASTER_CONFIG_DIR"] = _CONFIG_DIR
+    os.environ["SCHEMAS_DIR"] = _SCHEMAS_DIR
+    os.environ["SCHEMA_MAPPING_FILE"] = _MAPPING_FILE
+    get_settings.cache_clear()
+
     # Reset singletons
     routes_config._git_service = None
     routes_config._schema_service = None

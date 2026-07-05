@@ -91,6 +91,53 @@ class GitService:
                     logger.error("Rollback also failed: %s", rb_err)
                 return False
 
+    def commit_multiple_files(
+        self,
+        file_paths: list[str],
+        message: str,
+        author_name: str = "System",
+        author_email: str = "system@local",
+    ) -> bool:
+        """
+        Stage and commit multiple files in a single transaction.
+        If any part fails, roll back all modified files to their previous state.
+        """
+        if not self.repo:
+            return False
+
+        actor = self._actor(author_name, author_email)
+
+        with self._lock:
+            backups = {}
+            for path_str in file_paths:
+                p = Path(path_str).resolve()
+                rel = self._rel(p)
+                existed = p.exists()
+                content = p.read_bytes() if existed else None
+                backups[rel] = (p, existed, content)
+
+            try:
+                rels = [self._rel(Path(p).resolve()) for p in file_paths]
+                self.repo.index.add(rels)
+                self.repo.index.commit(message, author=actor, committer=actor)
+                logger.info("Committed %d files by %s <%s>", len(file_paths), author_name, author_email)
+                return True
+            except Exception as e:
+                logger.error("Git bulk commit failed: %s — rolling back", e)
+                for rel, (p, existed, content) in backups.items():
+                    try:
+                        if existed and content is not None:
+                            p.write_bytes(content)
+                        elif p.exists():
+                            p.unlink()
+                    except Exception as rb_err:
+                        logger.error("Failed to restore file %s: %s", rel, rb_err)
+                try:
+                    self.repo.head.reset(index=True, working_tree=True)
+                except Exception as reset_err:
+                    logger.error("Reset failed: %s", reset_err)
+                return False
+
     def remove_and_commit_file(
         self,
         file_path: str,

@@ -161,6 +161,10 @@ user accounts, and token issuance are all free.
 
 See **[docs/jwt_security.md](docs/jwt_security.md)** for a full security deep-dive.
 
+## Deployment & Backup Prerequisite (REQ-1.9)
+
+The master configuration Git repository MUST reside on a filesystem that is independently backed up. Production and staging environments must have scheduled filesystem snapshots, replication, or enterprise backup tooling enabled to guarantee recovery in the event of hardware or storage failure.
+
 ## Requirements
 
 - Python 3.14+

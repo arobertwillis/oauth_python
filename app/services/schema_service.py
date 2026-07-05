@@ -179,6 +179,7 @@ class SchemaService:
 
     def _validate_csv(self, content_str: str, schema_name: Optional[str], method: str) -> dict:
         """Validate a CSV file using pandas for parsing and pandera for schema checks."""
+        import pandera as pa
         try:
             df = pd.read_csv(io.StringIO(content_str))
         except Exception as e:
@@ -187,34 +188,30 @@ class SchemaService:
         if not schema_name or schema_name not in self.schemas:
             return {"valid": True, "schema_used": None, "method": method}
 
-        # The schema for CSV files is expected to define "columns" with pandera-style rules
         schema_def = self.schemas[schema_name]
-        errors = []
-
+        
+        pa_cols = {}
         if "columns" in schema_def:
-            expected_cols = schema_def["columns"]
-            for col_name, rules in expected_cols.items():
-                if col_name not in df.columns:
-                    errors.append(f"Missing required column: {col_name}")
-                    continue
-                col_type = rules.get("dtype")
-                if col_type:
-                    try:
-                        if col_type == "int":
-                            pd.to_numeric(df[col_name], errors="raise")
-                        elif col_type == "float":
-                            pd.to_numeric(df[col_name], errors="raise")
-                        elif col_type == "str":
-                            pass  # All CSV columns are strings by default
-                    except (ValueError, TypeError) as e:
-                        errors.append(f"Column '{col_name}' type error: expected {col_type}")
+            for col_name, rules in schema_def["columns"].items():
+                dtype_str = rules.get("dtype", "str")
+                nullable = rules.get("nullable", True)
+                
+                if dtype_str == "int":
+                    pa_type = pa.Int
+                elif dtype_str == "float":
+                    pa_type = pa.Float
+                elif dtype_str == "bool":
+                    pa_type = pa.Bool
+                else:
+                    pa_type = pa.String
+                
+                pa_cols[col_name] = pa.Column(pa_type, nullable=nullable)
 
-                if not rules.get("nullable", True):
-                    null_count = df[col_name].isnull().sum()
-                    if null_count > 0:
-                        errors.append(f"Column '{col_name}' contains {null_count} null values but nullable=false")
+        pa_schema = pa.DataFrameSchema(pa_cols)
 
-        if errors:
-            raise SchemaValidationException("CSV validation failed: " + "; ".join(errors))
+        try:
+            pa_schema.validate(df)
+        except (pa.errors.SchemaError, pa.errors.SchemaErrors) as e:
+            raise SchemaValidationException(f"CSV validation failed: {e}")
 
         return {"valid": True, "schema_used": schema_name, "method": method}

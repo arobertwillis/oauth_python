@@ -4,233 +4,717 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Master Configuration Manager</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- MSAL.js -->
+    <script type="text/javascript" src="https://alcdn.msauth.net/browser/2.30.0/js/msal-browser.min.js"></script>
+
     <style>
         :root {
-            --primary: #4F46E5;
-            --bg: #111827;
-            --surface: #1F2937;
-            --text: #F9FAFB;
-            --text-muted: #9CA3AF;
-            --border: #374151;
-            --error: #EF4444;
-            --success: #10B981;
+            /* Premium Dark Theme Colors */
+            --bg-base: #0f1115;
+            --bg-surface: #1a1d24;
+            --bg-surface-hover: #232730;
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #2d3748;
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+            --success: #10b981;
+            
+            --glass-bg: rgba(26, 29, 36, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.05);
         }
-        body {
-            font-family: 'Inter', system-ui, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            margin: 0;
-            padding: 2rem;
-            display: flex;
-            justify-content: center;
-        }
-        .container {
-            max-width: 800px;
-            width: 100%;
-        }
-        h1 {
-            color: var(--text);
-            margin-bottom: 2rem;
-            text-align: center;
-        }
-        .card {
-            background-color: var(--surface);
-            border-radius: 0.5rem;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
-        .form-group {
-            margin-bottom: 1rem;
-        }
-        label {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: var(--text-muted);
-        }
-        input[type="text"], input[type="file"], select {
-            width: 100%;
-            padding: 0.75rem;
-            border-radius: 0.25rem;
-            border: 1px solid var(--border);
-            background-color: var(--bg);
-            color: var(--text);
+
+        * {
             box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* ── Header ── */
+        header {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        header h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            background: linear-gradient(to right, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .user-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-name {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            display: none; /* hidden until logged in */
+        }
+
+        /* ── Buttons ── */
         button {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.875rem;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
             background-color: var(--primary);
             color: white;
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.25rem;
-            cursor: pointer;
+            box-shadow: 0 4px 14px 0 rgba(99, 102, 241, 0.39);
+        }
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            color: var(--text-main);
+            border: 1px solid var(--border);
+        }
+        .btn-outline:hover {
+            background-color: var(--bg-surface-hover);
+        }
+
+        .btn-danger {
+            background-color: transparent;
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        .btn-danger:hover {
+            background-color: rgba(239, 68, 68, 0.1);
+        }
+
+        /* ── Layout ── */
+        .main-container {
+            flex: 1;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+            display: none; /* hidden until logged in */
+            animation: fadeIn 0.5s ease;
+        }
+
+        .login-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .login-container h2 {
+            margin-bottom: 1rem;
             font-weight: 600;
-            transition: background-color 0.2s;
         }
-        button:hover {
-            background-color: #4338CA;
+        .login-container p {
+            color: var(--text-muted);
+            margin-bottom: 2rem;
         }
-        ul.file-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
+
+        /* ── Dashboard Grid ── */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 2rem;
         }
-        ul.file-list li {
-            padding: 1rem;
+
+        /* ── Tabs ── */
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
             border-bottom: 1px solid var(--border);
+            padding-bottom: 0.5rem;
+        }
+        .tab {
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            background: none;
+            border: none;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            position: relative;
+            transition: color 0.2s;
+        }
+        .tab:hover {
+            color: var(--text-main);
+        }
+        .tab.active {
+            color: var(--primary);
+        }
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -0.6rem;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background-color: var(--primary);
+            border-radius: 2px;
+        }
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        .tab-content.active {
+            display: block;
+        }
+
+        .card {
+            background: var(--bg-surface);
+            border: 1px solid var(--glass-border);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .card-header {
+            margin-bottom: 1.5rem;
+            font-size: 1.125rem;
+            font-weight: 600;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-        ul.file-list li:last-child {
-            border-bottom: none;
+
+        /* ── Table ── */
+        .table-container {
+            overflow-x: auto;
         }
-        .file-actions button {
-            background-color: var(--error);
-            padding: 0.5rem 1rem;
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+        th, td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
             font-size: 0.875rem;
         }
-        .file-actions button:hover {
-            background-color: #DC2626;
+        th {
+            color: var(--text-muted);
+            font-weight: 500;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
         }
-        .alert {
-            padding: 1rem;
+        tr:last-child td {
+            border-bottom: none;
+        }
+        tr:hover td {
+            background-color: var(--bg-surface-hover);
+        }
+        .file-path {
+            font-family: monospace;
+            color: #38bdf8;
+        }
+
+        /* ── Forms ── */
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+        input[type="text"], select, input[type="file"] {
+            width: 100%;
+            background-color: var(--bg-base);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 0.75rem;
+            border-radius: 0.375rem;
+            font-family: inherit;
+            font-size: 0.875rem;
+            transition: border-color 0.2s;
+        }
+        input[type="text"]:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        /* ── Toasts ── */
+        #toast-container {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .toast {
+            background: var(--bg-surface);
+            border-left: 4px solid var(--primary);
+            padding: 1rem 1.5rem;
             border-radius: 0.25rem;
-            margin-bottom: 1rem;
-            display: none;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+            animation: slideIn 0.3s ease forwards;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
-        .alert.error {
-            background-color: rgba(239, 68, 68, 0.1);
-            border: 1px solid var(--error);
-            color: #FCA5A5;
-            display: block;
+        .toast.error { border-left-color: var(--danger); }
+        .toast.success { border-left-color: var(--success); }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-        .alert.success {
-            background-color: rgba(16, 185, 129, 0.1);
-            border: 1px solid var(--success);
-            color: #6EE7B7;
-            display: block;
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Master Configuration</h1>
 
-        <div class="card">
-            <h2>Upload Configuration</h2>
-            <form id="uploadForm">
-                <div class="form-group">
-                    <label for="filepath">Target Filepath (e.g. settings.json or app/config.yaml)</label>
-                    <input type="text" id="filepath" name="filepath" required placeholder="relative/path/to/file.json">
-                </div>
-                <div class="form-group">
-                    <label for="schema">Validation Schema (Optional)</label>
-                    <select id="schema" name="schema_name">
-                        <option value="">-- No Schema --</option>
-                        {% for schema in schemas %}
-                        <option value="{{ schema }}">{{ schema }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="file">File</label>
-                    <input type="file" id="file" name="file" required>
-                </div>
-                <button type="submit">Upload and Commit</button>
-            </form>
-            <div id="uploadResult" style="margin-top: 1rem;"></div>
+    <header>
+        <h1>Master Config</h1>
+        <div class="user-controls">
+            <span class="user-name" id="userNameDisplay"></span>
+            <button id="loginBtn" class="btn-primary" onclick="signIn()">Sign In with Microsoft</button>
+            <button id="logoutBtn" class="btn-outline" style="display: none;" onclick="signOut()">Sign Out</button>
         </div>
+    </header>
 
-        <div class="card">
-            <h2>Current Files</h2>
-            {% if files %}
-            <ul class="file-list">
-                {% for file in files %}
-                <li>
-                    <span>{{ file }}</span>
-                    <div class="file-actions">
-                        <a href="/api/config/files/{{ file }}" target="_blank" style="color: var(--text-muted); margin-right: 1rem;">View</a>
-                        <button onclick="deleteFile('{{ file }}')">Delete</button>
-                    </div>
-                </li>
-                {% endfor %}
-            </ul>
-            {% else %}
-            <p style="color: var(--text-muted);">No configuration files found.</p>
-            {% endif %}
-        </div>
+    <div class="login-container" id="loginContainer">
+        <h2>Authentication Required</h2>
+        <p>Please sign in with your Azure AD account to access the configuration dashboard.</p>
+        <button class="btn-primary" onclick="signIn()" style="padding: 0.75rem 2rem; font-size: 1rem;">Sign In</button>
     </div>
 
-    <script>
-        // Use the token stored by Swagger UI or your auth system if available
-        // For local development, we might need to handle auth carefully. 
-        // We will assume the user has a valid session or token.
+    <div class="main-container" id="mainContainer">
         
-        async function getAuthHeaders() {
-            // Placeholder: in a real app, grab the token from local storage or session
-            return {}; 
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('filesTab', this)">Configuration Files</button>
+            <button class="tab" onclick="switchTab('schemasTab', this)">Validation Schemas</button>
+        </div>
+
+        <!-- FILES TAB -->
+        <div id="filesTab" class="tab-content active">
+            <div class="dashboard-grid">
+                
+                <!-- Left Column: File List -->
+                <div class="card">
+                    <div class="card-header">
+                        <span>Configuration Files</span>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <input type="text" id="folderFilter" placeholder="Filter by folder..." style="padding: 0.35rem 0.75rem; font-size: 0.875rem; width: 200px;" onkeyup="renderFiles()">
+                            <button class="btn-outline" onclick="loadFiles()">Refresh</button>
+                        </div>
+                    </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Filepath</th>
+                                <th>Last Modified</th>
+                                <th>Author</th>
+                                <th style="text-align: right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="fileTableBody">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Right Column: Upload Form -->
+            <div class="card">
+                <div class="card-header">Upload File</div>
+                <form id="uploadForm">
+                    <div class="form-group">
+                        <label for="filepath">Target Filepath</label>
+                        <input type="text" id="filepath" placeholder="e.g. cepe/app_settings.json" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="schema">Validation Schema (Optional)</label>
+                        <select id="schema">
+                            <option value="">-- Auto-detect / None --</option>
+                            {% for schema in schemas %}
+                            <option value="{{ schema }}">{{ schema }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="file">File Content</label>
+                        <input type="file" id="file" required>
+                    </div>
+                    <button type="submit" class="btn-primary" style="width: 100%;">Upload and Commit</button>
+                </form>
+            </div>
+        </div>
+        </div> <!-- End filesTab -->
+
+        <!-- SCHEMAS TAB -->
+        <div id="schemasTab" class="tab-content">
+            <div class="dashboard-grid">
+                <!-- Left Column: Schema List -->
+            <div class="card">
+                <div class="card-header">
+                    <span>Validation Schemas</span>
+                    <button class="btn-outline" onclick="loadSchemas()">Refresh</button>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Schema Name</th>
+                                <th style="text-align: right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="schemaTableBody">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Right Column: Upload Schema Form -->
+            <div class="card">
+                <div class="card-header">Upload / Update Schema</div>
+                <form id="uploadSchemaForm">
+                    <div class="form-group">
+                        <label for="schemaName">Schema Name</label>
+                        <input type="text" id="schemaName" placeholder="e.g. app_settings" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="schemaBody">JSON Schema Definition</label>
+                        <textarea id="schemaBody" rows="8" required style="width: 100%; background-color: var(--bg-base); border: 1px solid var(--border); color: var(--text-main); padding: 0.75rem; border-radius: 0.375rem; font-family: monospace; font-size: 0.875rem; resize: vertical;" placeholder='{"type": "object", "properties": { ... }}'></textarea>
+                    </div>
+                    <button type="submit" class="btn-primary" style="width: 100%;">Save Schema</button>
+                </form>
+            </div>
+        </div>
+        
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script>
+        // ── Azure AD MSAL Configuration ──
+        const msalConfig = {
+            auth: {
+                clientId: "{{ azure_client_id }}",
+                authority: "https://login.microsoftonline.com/{{ azure_tenant_id }}",
+                redirectUri: window.location.origin + "/config",
+            },
+            cache: {
+                cacheLocation: "sessionStorage",
+                storeAuthStateInCookie: false,
+            }
+        };
+
+        const msalInstance = new msal.PublicClientApplication(msalConfig);
+        const loginRequest = {
+            // Need the correct scope. Fallback to user.read if API scope not explicitly known here
+            scopes: ["api://{{ azure_client_id }}/access_as_user"] 
+        };
+
+        let activeAccount = null;
+
+        async function initializeMsal() {
+            await msalInstance.initialize();
+            
+            const accounts = msalInstance.getAllAccounts();
+            if (accounts.length > 0) {
+                activeAccount = accounts[0];
+                msalInstance.setActiveAccount(activeAccount);
+                showDashboard();
+            }
         }
 
-        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const filepath = document.getElementById('filepath').value;
-            const schema = document.getElementById('schema').value;
-            const fileInput = document.getElementById('file');
-            const file = fileInput.files[0];
+        async function signIn() {
+            try {
+                const loginResponse = await msalInstance.loginPopup(loginRequest);
+                activeAccount = loginResponse.account;
+                msalInstance.setActiveAccount(activeAccount);
+                showDashboard();
+            } catch (err) {
+                console.error(err);
+                showToast("Login failed", "error");
+            }
+        }
+
+        function signOut() {
+            msalInstance.logoutPopup().then(() => {
+                window.location.reload();
+            });
+        }
+
+        async function getToken() {
+            if (!activeAccount) throw new Error("No active account");
+            try {
+                const response = await msalInstance.acquireTokenSilent({
+                    ...loginRequest,
+                    account: activeAccount
+                });
+                return response.accessToken;
+            } catch (err) {
+                if (err instanceof msal.InteractionRequiredAuthError) {
+                    const response = await msalInstance.acquireTokenPopup(loginRequest);
+                    return response.accessToken;
+                }
+                throw err;
+            }
+        }
+
+        async function apiFetch(endpoint, options = {}) {
+            const token = await getToken();
+            const headers = options.headers || {};
+            // DO NOT set Content-Type for FormData, browser sets it automatically with boundary
+            if (!(options.body instanceof FormData)) {
+                headers['Content-Type'] = headers['Content-Type'] || 'application/json';
+            }
+            headers['Authorization'] = `Bearer ${token}`;
             
+            const res = await fetch(`/api/config${endpoint}`, {
+                ...options,
+                headers
+            });
+            
+            if (!res.ok) {
+                let msg = res.statusText;
+                try {
+                    const data = await res.json();
+                    msg = data.detail || msg;
+                } catch(e) {}
+                throw new Error(msg);
+            }
+            return res.json();
+        }
+
+        // ── UI Logic ──
+
+        function showDashboard() {
+            document.getElementById("loginContainer").style.display = "none";
+            document.getElementById("mainContainer").style.display = "block";
+            document.getElementById("loginBtn").style.display = "none";
+            document.getElementById("logoutBtn").style.display = "block";
+            
+            const nameEl = document.getElementById("userNameDisplay");
+            nameEl.textContent = activeAccount.name;
+            nameEl.style.display = "block";
+
+            loadFiles();
+            loadSchemas();
+        }
+
+        function showToast(msg, type="success") {
+            const container = document.getElementById("toast-container");
+            const toast = document.createElement("div");
+            toast.className = `toast ${type}`;
+            toast.textContent = msg;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = 0;
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function switchTab(tabId, btnElement) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.add('active');
+            btnElement.classList.add('active');
+        }
+
+        let allFiles = [];
+
+        async function loadFiles() {
+            const tbody = document.getElementById("fileTableBody");
+            tbody.innerHTML = "<tr><td colspan='4'>Loading...</td></tr>";
+            try {
+                const data = await apiFetch("/files");
+                allFiles = data.files || [];
+                renderFiles();
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan='4' style='color: var(--danger);'>Error: ${err.message}</td></tr>`;
+            }
+        }
+
+        function renderFiles() {
+            const tbody = document.getElementById("fileTableBody");
+            tbody.innerHTML = "";
+            const filterText = document.getElementById("folderFilter").value.toLowerCase();
+            
+            const filtered = allFiles.filter(f => f.path.toLowerCase().includes(filterText));
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = "<tr><td colspan='4' style='text-align: center; color: var(--text-muted);'>No files found matching filter.</td></tr>";
+                return;
+            }
+            filtered.forEach(f => {
+                const date = f.last_modified_at ? new Date(f.last_modified_at).toLocaleString() : 'Unknown';
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td class="file-path">${f.path}</td>
+                    <td>${date}</td>
+                    <td>${f.last_modified_by}</td>
+                    <td style="text-align: right; display: flex; justify-content: flex-end; gap: 0.5rem;">
+                        <button class="btn-outline" onclick="viewHistory('${f.path}')">History</button>
+                        <button class="btn-danger" onclick="deleteFile('${f.path}')">Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        document.getElementById("uploadForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const filepath = document.getElementById("filepath").value;
+            const schema = document.getElementById("schema").value;
+            const file = document.getElementById("file").files[0];
+
             const formData = new FormData();
             formData.append("file", file);
-            if (schema) {
-                formData.append("schema_name", schema);
-            }
-
-            const resultDiv = document.getElementById('uploadResult');
-            resultDiv.className = 'alert';
-            resultDiv.innerHTML = 'Uploading...';
-            resultDiv.style.display = 'block';
+            if (schema) formData.append("schema_name", schema);
 
             try {
-                const response = await fetch(`/api/config/files/${filepath}`, {
+                const res = await apiFetch(`/files/${filepath}`, {
                     method: 'POST',
-                    body: formData,
-                    headers: await getAuthHeaders()
+                    body: formData
                 });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    resultDiv.className = 'alert success';
-                    resultDiv.innerHTML = data.message;
-                    setTimeout(() => location.reload(), 1500);
-                } else {
-                    resultDiv.className = 'alert error';
-                    resultDiv.innerHTML = `Error: ${data.detail || JSON.stringify(data)}`;
-                }
-            } catch (err) {
-                resultDiv.className = 'alert error';
-                resultDiv.innerHTML = `Network error: ${err.message}`;
+                showToast(res.message);
+                document.getElementById("uploadForm").reset();
+                loadFiles();
+            } catch(err) {
+                showToast(`Upload failed: ${err.message}`, "error");
             }
         });
 
         async function deleteFile(filepath) {
             if (!confirm(`Are you sure you want to delete ${filepath}?`)) return;
-            
             try {
-                const response = await fetch(`/api/config/files/${filepath}`, {
-                    method: 'DELETE',
-                    headers: await getAuthHeaders()
-                });
-                if (response.ok) {
-                    location.reload();
-                } else {
-                    const data = await response.json();
-                    alert(`Failed to delete: ${data.detail}`);
-                }
-            } catch (err) {
-                alert(`Error: ${err.message}`);
+                const res = await apiFetch(`/files/${filepath}`, { method: 'DELETE' });
+                showToast(res.message);
+                loadFiles();
+            } catch(err) {
+                showToast(`Delete failed: ${err.message}`, "error");
             }
         }
+
+        async function viewHistory(filepath) {
+            try {
+                const res = await apiFetch(`/history/${filepath}`);
+                console.log(res);
+                alert(`Found ${res.history.length} commits for ${filepath}. Check console for details. (UI expansion coming soon)`);
+            } catch(err) {
+                showToast(`Failed to load history: ${err.message}`, "error");
+            }
+        }
+
+        async function loadSchemas() {
+            const tbody = document.getElementById("schemaTableBody");
+            tbody.innerHTML = "<tr><td colspan='2'>Loading...</td></tr>";
+            try {
+                const data = await apiFetch("/schemas");
+                tbody.innerHTML = "";
+                if (data.schemas.length === 0) {
+                    tbody.innerHTML = "<tr><td colspan='2' style='text-align: center; color: var(--text-muted);'>No schemas found.</td></tr>";
+                    return;
+                }
+                data.schemas.forEach(name => {
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
+                        <td class="file-path">${name}</td>
+                        <td style="text-align: right; display: flex; justify-content: flex-end; gap: 0.5rem;">
+                            <button class="btn-danger" onclick="deleteSchema('${name}')">Delete</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan='2' style='color: var(--danger);'>Error: ${err.message}</td></tr>`;
+            }
+        }
+
+        document.getElementById("uploadSchemaForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const schemaName = document.getElementById("schemaName").value;
+            const schemaBodyStr = document.getElementById("schemaBody").value;
+
+            try {
+                // Verify it's valid JSON before sending
+                const schemaJson = JSON.parse(schemaBodyStr);
+                
+                const res = await apiFetch(`/schemas/${schemaName}`, {
+                    method: 'POST',
+                    body: JSON.stringify(schemaJson)
+                });
+                
+                showToast(res.message);
+                document.getElementById("uploadSchemaForm").reset();
+                loadSchemas();
+            } catch(err) {
+                if (err instanceof SyntaxError) {
+                    showToast("Invalid JSON schema syntax.", "error");
+                } else {
+                    showToast(`Schema save failed: ${err.message}`, "error");
+                }
+            }
+        });
+
+        async function deleteSchema(name) {
+            if (!confirm(`Are you sure you want to delete schema '${name}'?`)) return;
+            try {
+                const res = await apiFetch(`/schemas/${name}`, { method: 'DELETE' });
+                showToast(res.message);
+                loadSchemas();
+            } catch(err) {
+                showToast(`Delete failed: ${err.message}`, "error");
+            }
+        }
+
+        // Initialize on page load
+        initializeMsal();
+
     </script>
 </body>
 </html>

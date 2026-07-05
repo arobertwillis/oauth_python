@@ -39,6 +39,13 @@ async def config_dashboard(request: Request):
     schemas = schema_service.get_available_schemas()
     
     return templates.TemplateResponse(
-        "config_ui.html", 
-        {"request": request, "files": sorted(files), "schemas": sorted(schemas)}
+        request=request,
+        name="config_ui.html", 
+        context={
+            "request": request, 
+            "files": sorted(files), 
+            "schemas": sorted(schemas),
+            "azure_client_id": settings.azure_client_id,
+            "azure_tenant_id": settings.azure_tenant_id,
+        }
     )

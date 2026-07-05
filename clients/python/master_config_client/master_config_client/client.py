@@ -127,3 +127,23 @@ class MasterConfigClient:
                 local_path.write_bytes(content)
 
         return str(target_dir)
+
+    def deploy_diff(self, zip_content: bytes) -> Dict:
+        """
+        Perform a dry-run deployment comparison.
+        """
+        files = {"file": ("deploy.zip", zip_content)}
+        res = self.session.post(f"{self.base_url}/deploy/diff", files=files)
+        self._handle_response(res)
+        return res.json()
+
+    def deploy_apply(self, zip_content: bytes, resolutions: Optional[Dict[str, str]] = None) -> Dict:
+        """
+        Apply a deployment package, resolving conflicts as specified.
+        """
+        import json
+        files = {"file": ("deploy.zip", zip_content)}
+        data = {"resolutions": json.dumps(resolutions or {})}
+        res = self.session.post(f"{self.base_url}/deploy/apply", files=files, data=data)
+        self._handle_response(res)
+        return res.json()
