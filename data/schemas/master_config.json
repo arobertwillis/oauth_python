@@ -1,0 +1,28 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Master Configuration",
+    "type": "object",
+    "properties": {
+        "environment": {
+            "type": "string"
+        },
+        "version": {
+            "type": "string"
+        },
+        "components": {
+            "type": "object",
+            "additionalProperties": {
+                "type": "object",
+                "properties": {
+                    "description": { "type": "string" },
+                    "shared_files": {
+                        "type": "array",
+                        "items": { "type": "string" }
+                    }
+                },
+                "required": ["description", "shared_files"]
+            }
+        }
+    },
+    "required": ["environment", "version", "components"]
+}

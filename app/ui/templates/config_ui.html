@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Configuration Manager</title>
+    <style>
+        :root {
+            --primary: #4F46E5;
+            --bg: #111827;
+            --surface: #1F2937;
+            --text: #F9FAFB;
+            --text-muted: #9CA3AF;
+            --border: #374151;
+            --error: #EF4444;
+            --success: #10B981;
+        }
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            max-width: 800px;
+            width: 100%;
+        }
+        h1 {
+            color: var(--text);
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        .card {
+            background-color: var(--surface);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-muted);
+        }
+        input[type="text"], input[type="file"], select {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 0.25rem;
+            border: 1px solid var(--border);
+            background-color: var(--bg);
+            color: var(--text);
+            box-sizing: border-box;
+        }
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: #4338CA;
+        }
+        ul.file-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        ul.file-list li {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        ul.file-list li:last-child {
+            border-bottom: none;
+        }
+        .file-actions button {
+            background-color: var(--error);
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+        .file-actions button:hover {
+            background-color: #DC2626;
+        }
+        .alert {
+            padding: 1rem;
+            border-radius: 0.25rem;
+            margin-bottom: 1rem;
+            display: none;
+        }
+        .alert.error {
+            background-color: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--error);
+            color: #FCA5A5;
+            display: block;
+        }
+        .alert.success {
+            background-color: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--success);
+            color: #6EE7B7;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Master Configuration</h1>
+
+        <div class="card">
+            <h2>Upload Configuration</h2>
+            <form id="uploadForm">
+                <div class="form-group">
+                    <label for="filepath">Target Filepath (e.g. settings.json or app/config.yaml)</label>
+                    <input type="text" id="filepath" name="filepath" required placeholder="relative/path/to/file.json">
+                </div>
+                <div class="form-group">
+                    <label for="schema">Validation Schema (Optional)</label>
+                    <select id="schema" name="schema_name">
+                        <option value="">-- No Schema --</option>
+                        {% for schema in schemas %}
+                        <option value="{{ schema }}">{{ schema }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="file">File</label>
+                    <input type="file" id="file" name="file" required>
+                </div>
+                <button type="submit">Upload and Commit</button>
+            </form>
+            <div id="uploadResult" style="margin-top: 1rem;"></div>
+        </div>
+
+        <div class="card">
+            <h2>Current Files</h2>
+            {% if files %}
+            <ul class="file-list">
+                {% for file in files %}
+                <li>
+                    <span>{{ file }}</span>
+                    <div class="file-actions">
+                        <a href="/api/config/files/{{ file }}" target="_blank" style="color: var(--text-muted); margin-right: 1rem;">View</a>
+                        <button onclick="deleteFile('{{ file }}')">Delete</button>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p style="color: var(--text-muted);">No configuration files found.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        // Use the token stored by Swagger UI or your auth system if available
+        // For local development, we might need to handle auth carefully. 
+        // We will assume the user has a valid session or token.
+        
+        async function getAuthHeaders() {
+            // Placeholder: in a real app, grab the token from local storage or session
+            return {}; 
+        }
+
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const filepath = document.getElementById('filepath').value;
+            const schema = document.getElementById('schema').value;
+            const fileInput = document.getElementById('file');
+            const file = fileInput.files[0];
+            
+            const formData = new FormData();
+            formData.append("file", file);
+            if (schema) {
+                formData.append("schema_name", schema);
+            }
+
+            const resultDiv = document.getElementById('uploadResult');
+            resultDiv.className = 'alert';
+            resultDiv.innerHTML = 'Uploading...';
+            resultDiv.style.display = 'block';
+
+            try {
+                const response = await fetch(`/api/config/files/${filepath}`, {
+                    method: 'POST',
+                    body: formData,
+                    headers: await getAuthHeaders()
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'alert success';
+                    resultDiv.innerHTML = data.message;
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    resultDiv.className = 'alert error';
+                    resultDiv.innerHTML = `Error: ${data.detail || JSON.stringify(data)}`;
+                }
+            } catch (err) {
+                resultDiv.className = 'alert error';
+                resultDiv.innerHTML = `Network error: ${err.message}`;
+            }
+        });
+
+        async function deleteFile(filepath) {
+            if (!confirm(`Are you sure you want to delete ${filepath}?`)) return;
+            
+            try {
+                const response = await fetch(`/api/config/files/${filepath}`, {
+                    method: 'DELETE',
+                    headers: await getAuthHeaders()
+                });
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    const data = await response.json();
+                    alert(`Failed to delete: ${data.detail}`);
+                }
+            } catch (err) {
+                alert(`Error: ${err.message}`);
+            }
+        }
+    </script>
+</body>
+</html>

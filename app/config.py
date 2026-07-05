@@ -45,6 +45,13 @@ class Settings(BaseSettings):
     app_description: str = "FastAPI application secured with Azure Entra ID"
     app_version: str = "1.0.0"
 
+    # ── Master Configuration ─────────────────────────────────────
+    master_config_dir: str = "data/master_config"
+    schemas_dir: str = "data/schemas"
+    schema_mapping_file: str = "data/schemas/mapping.json"
+    max_upload_size_bytes: int = 1_073_741_824  # 1 GB
+    protected_files: list[str] = ["master_configuration.json"]
+
     @property
     def openapi_scope(self) -> str:
         """The scope string used in OAuth2 flows (Swagger UI / frontend)."""

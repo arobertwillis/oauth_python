@@ -1,0 +1,4 @@
+{
+    "^master_configuration\\.json$": "master_config",
+    "^.*app_settings.*\\.json$": "app_settings"
+}

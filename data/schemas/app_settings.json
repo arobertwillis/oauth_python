@@ -1,0 +1,19 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Application Settings",
+    "type": "object",
+    "properties": {
+        "app_name": {
+            "type": "string"
+        },
+        "debug_mode": {
+            "type": "boolean"
+        },
+        "max_connections": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000
+        }
+    },
+    "required": ["app_name", "debug_mode"]
+}

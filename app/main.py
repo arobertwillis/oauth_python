@@ -103,7 +103,13 @@ def create_app() -> FastAPI:
     )
 
     # ── Routes ──
-    application.include_router(router)
+    from app.routes import router as base_router
+    from app.routes_config import router as config_router
+    from app.routes_ui import router as ui_router
+    
+    application.include_router(base_router)
+    application.include_router(config_router)
+    application.include_router(ui_router)
 
     return application
 

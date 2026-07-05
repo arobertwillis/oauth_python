@@ -1,0 +1,18 @@
+{
+    "environment": "development",
+    "version": "1.0.0",
+    "components": {
+        "cepe": {
+            "description": "CEPE batch processing component",
+            "shared_files": []
+        },
+        "wasabi": {
+            "description": "Wasabi batch processing component",
+            "shared_files": []
+        },
+        "gvmerge": {
+            "description": "GV Merge batch processing component",
+            "shared_files": []
+        }
+    }
+}
