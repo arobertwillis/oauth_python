@@ -39,6 +39,9 @@ This document outlines the requirements for the Master Configuration file upload
 - **REQ-5.4:** The REST API MUST expose interactive OpenAPI/Swagger documentation to facilitate client integration and testing.
 - **REQ-5.5:** The REST API layer MUST be strictly secured, enforcing authentication (e.g., Azure AD OAuth2) and authorization for all endpoints.
 - **REQ-5.6:** The REST API layer MUST produce detailed application logs for every request and action to facilitate monitoring, debugging, and audit tracking.
+- **REQ-5.7:** The system MUST enforce two distinct access levels: **read** and **write**. Write access is required to upload, update, or delete configuration files. Read access permits retrieving and downloading files only.
+- **REQ-5.8:** Write access MUST implicitly grant read access. A user with write permissions can both modify and retrieve configuration files.
+- **REQ-5.9:** A user with read-only access MUST be prevented from making any modifications (uploads, updates, deletions). All mutating endpoints MUST return a `403 Forbidden` response for read-only users.
 
 ## 6. Environment Synchronization & Deployment
 - **REQ-6.1:** Each environment (e.g., staging, production) MUST maintain its own unique master configuration Git repository.
