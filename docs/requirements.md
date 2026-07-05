@@ -29,6 +29,9 @@ This document outlines the requirements for the Master Configuration file upload
 - **REQ-5.1:** The system MUST expose a RESTful API service to facilitate file uploads, downloads, and deletions.
 - **REQ-5.2:** The system MUST provide a user interface built using Jinja2 templates on top of the REST service to allow human users to easily interact with the master configuration.
 - **REQ-5.3:** All clients and synchronization jobs MUST utilize the REST API for uploading and downloading configuration files.
+- **REQ-5.4:** The REST API MUST expose interactive OpenAPI/Swagger documentation to facilitate client integration and testing.
+- **REQ-5.5:** The REST API layer MUST be strictly secured, enforcing authentication (e.g., Azure AD OAuth2) and authorization for all endpoints.
+- **REQ-5.6:** The REST API layer MUST produce detailed application logs for every request and action to facilitate monitoring, debugging, and audit tracking.
 
 ## 6. Environment Synchronization & Deployment
 - **REQ-6.1:** Each environment (e.g., staging, production) MUST maintain its own unique master configuration Git repository.
@@ -54,3 +57,7 @@ This document outlines the requirements for the Master Configuration file upload
 - **REQ-9.3:** The tool MUST expose security and authentication settings, including Azure AD Tenant ID, Client ID, and whether API authentication is strictly enforced.
 - **REQ-9.4:** The tool MUST support configuring the location of the schema mapping definitions (e.g., `SCHEMA_MAPPING_FILE`), which map filename regex patterns to specific validation schemas.
 - **REQ-9.5:** If pushing to an upstream Git remote is enabled, the tool MUST allow configuration of Git credentials (e.g., `GIT_PAT` or `GIT_SSH_KEY_PATH`).
+
+## 10. Testing & Quality Assurance
+- **REQ-10.1:** The system MUST have full automated test coverage specifically targeting the REST API layer.
+- **REQ-10.2:** The automated test suite MUST verify all upload paths, including creating and validating test configuration files *with* a strict schema (both valid and invalid payloads) and files uploaded *without* a specific schema.
