@@ -38,3 +38,8 @@ This document outlines the requirements for the Master Configuration file upload
 ## 7. History & Rollback
 - **REQ-7.1:** The system MUST provide an interface (API and UI) to view the historical versions of a specific configuration file by querying the Git history.
 - **REQ-7.2:** The system MUST allow users to easily restore/rollback a file to any of its previous versions if a deployment or user change breaks the system.
+
+## 8. Runtime Execution & Component Isolation
+- **REQ-8.1:** Configuration files MUST be logically organized into folders dedicated to particular system components, while allowing for shared files that are utilized by multiple components.
+- **REQ-8.2:** System components MUST NOT run directly against the "master configuration" folder. This guarantees that live updates to the master configuration do not impact running batches or cause inconsistencies mid-execution.
+- **REQ-8.3:** A background synchronization job (sync job) MUST be implemented to copy the master configuration down to a local, dated folder (e.g., timestamped snapshot) for actual use by the system components during runtime.
