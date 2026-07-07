@@ -266,7 +266,7 @@ class TestUploadWithoutSchema:
     def test_upload_yaml_no_schema(self, client):
         content = "key: value\nlist:\n  - a\n  - b\n"
         resp = client.post(
-            "/api/config/files/shared/data.yaml",
+            "/api/config/files/wasabi/data.yaml",
             files={"file": ("data.yaml", content)},
         )
         assert resp.status_code == 200

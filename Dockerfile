@@ -1,6 +1,11 @@
 # Use the official Python 3.14 Slim image based on Debian Trixie
 FROM python:3.14-slim-trixie
 
+# Install system dependencies (git is required for GitPython)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
 # Set environment variables
 # PYTHONDONTWRITEBYTECODE=1: Prevents Python from writing .pyc files to disk
 # PYTHONUNBUFFERED=1: Ensures that Python output is logged to the terminal
@@ -16,8 +21,9 @@ COPY requirements.txt /app/
 # Install the dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the application code
+# Copy the application code and initial configuration data
 COPY app/ /app/app/
+COPY data/ /app/data/
 
 # Expose the port the app runs on
 EXPOSE 8000

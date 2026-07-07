@@ -21,6 +21,8 @@ This document outlines the requirements for the Master Configuration file upload
 - **REQ-2.5:** Critical system files (e.g., `master_configuration.json`) MUST be protected from accidental deletion via the API or UI. The system MUST reject delete requests for protected files with a clear error message.
 - **REQ-2.6:** The system MUST enforce a maximum file upload size of 1 GB. Uploads exceeding this limit MUST be rejected with a clear error message before any processing occurs.
 - **REQ-2.7:** The system MUST support CSV file uploads. CSV files MUST be validated using `pandas` for parsing and `pandera` for schema-level validation (e.g., enforcing column names, data types, value constraints, and nullability rules). CSV validation schemas should be definable alongside JSON schemas.
+- **REQ-2.8:** The system MUST maintain a configurable list of allowed component folders (e.g., `cepe`, `wasabi`, `gvmerge`). File uploads MUST be rejected if the target path does not reside within one of the allowed component folders. The allowed components list MUST be configurable via the application settings (environment variable / `.env`).
+- **REQ-2.9:** The UI MUST require users to first select a component from the allowed list before uploading a file. The file path field should then only specify the path *within* that component folder (including optional subfolders). The file listing in the UI MUST be filterable by component.
 
 ## 3. Schema Validation & Recognition
 - **REQ-3.1:** The system MUST support validating uploaded files against predefined schemas (e.g., JSON Schema) to prevent incorrect files from being uploaded.

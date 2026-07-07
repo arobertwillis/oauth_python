@@ -343,7 +343,12 @@
                     <div class="card-header">
                         <span>Configuration Files</span>
                         <div style="display: flex; gap: 0.5rem; align-items: center;">
-                            <input type="text" id="folderFilter" placeholder="Filter by folder..." style="padding: 0.35rem 0.75rem; font-size: 0.875rem; width: 200px;" onkeyup="renderFiles()">
+                            <select id="componentFilter" onchange="renderFiles()" style="padding: 0.35rem 0.75rem; font-size: 0.875rem; width: 180px;">
+                                <option value="">All Components</option>
+                                {% for comp in allowed_components %}
+                                <option value="{{ comp }}">{{ comp }}</option>
+                                {% endfor %}
+                            </select>
                             <button class="btn-outline" onclick="loadFiles()">Refresh</button>
                         </div>
                     </div>
@@ -369,8 +374,17 @@
                 <div class="card-header">Upload File</div>
                 <form id="uploadForm">
                     <div class="form-group">
-                        <label for="filepath">Target Filepath</label>
-                        <input type="text" id="filepath" placeholder="e.g. cepe/app_settings.json" required>
+                        <label for="uploadComponent">Component</label>
+                        <select id="uploadComponent" required>
+                            <option value="">-- Select Component --</option>
+                            {% for comp in allowed_components %}
+                            <option value="{{ comp }}">{{ comp }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="filepath">Path within Component</label>
+                        <input type="text" id="filepath" placeholder="e.g. subfolder/app_settings.json" required>
                     </div>
                     <div class="form-group">
                         <label for="schema">Validation Schema (Optional)</label>
@@ -582,9 +596,12 @@
         function renderFiles() {
             const tbody = document.getElementById("fileTableBody");
             tbody.innerHTML = "";
-            const filterText = document.getElementById("folderFilter").value.toLowerCase();
+            const selectedComponent = document.getElementById("componentFilter").value;
             
-            const filtered = allFiles.filter(f => f.path.toLowerCase().includes(filterText));
+            const filtered = allFiles.filter(f => {
+                if (!selectedComponent) return true;
+                return f.path.startsWith(selectedComponent + "/");
+            });
 
             if (filtered.length === 0) {
                 tbody.innerHTML = "<tr><td colspan='4' style='text-align: center; color: var(--text-muted);'>No files found matching filter.</td></tr>";
@@ -608,7 +625,13 @@
 
         document.getElementById("uploadForm").addEventListener("submit", async (e) => {
             e.preventDefault();
-            const filepath = document.getElementById("filepath").value;
+            const component = document.getElementById("uploadComponent").value;
+            const relativePath = document.getElementById("filepath").value;
+            if (!component) {
+                showToast("Please select a component first.", "error");
+                return;
+            }
+            const filepath = component + "/" + relativePath.replace(/^\/+/, '');
             const schema = document.getElementById("schema").value;
             const file = document.getElementById("file").files[0];
 

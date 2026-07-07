@@ -51,6 +51,7 @@ class Settings(BaseSettings):
     schema_mapping_file: str = "data/schemas/mapping.json"
     max_upload_size_bytes: int = 1_073_741_824  # 1 GB
     protected_files: list[str] = ["master_configuration.json"]
+    allowed_components: list[str] = ["cepe", "wasabi", "gvmerge"]
 
     @property
     def openapi_scope(self) -> str:

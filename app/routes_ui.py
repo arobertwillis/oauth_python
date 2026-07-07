@@ -45,6 +45,7 @@ async def config_dashboard(request: Request):
             "request": request, 
             "files": sorted(files), 
             "schemas": sorted(schemas),
+            "allowed_components": settings.allowed_components,
             "azure_client_id": settings.azure_client_id,
             "azure_tenant_id": settings.azure_tenant_id,
         }

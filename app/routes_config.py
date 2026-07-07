@@ -148,6 +148,14 @@ async def download_file(filepath: str, request: Request):
     return FileResponse(target_path, filename=target_path.name)
 
 
+@router.get("/allowed-components", dependencies=[Depends(read_access_dep)])
+async def list_allowed_components(request: Request):
+    """Return the list of allowed component folders (REQ-2.8)."""
+    _log_request(request, "list_allowed_components")
+    settings = get_settings()
+    return {"components": settings.allowed_components}
+
+
 @router.post("/files/{filepath:path}", dependencies=[Depends(write_access_dep)])
 async def upload_file(
     filepath: str,
@@ -160,6 +168,7 @@ async def upload_file(
     Upload a configuration file.
 
     - Validates file size (max 1 GB)
+    - Validates the file belongs to an allowed component folder (REQ-2.8)
     - Auto-detects or explicitly validates against a schema
     - Runs custom validators
     - Saves file and commits to Git with the authenticated user as author
@@ -170,6 +179,17 @@ async def upload_file(
 
     if not str(target_path).startswith(str(config_dir)):
         raise HTTPException(status_code=400, detail="Invalid file path")
+
+    # Component folder enforcement (REQ-2.8)
+    path_parts = Path(filepath).parts
+    if not path_parts:
+        raise HTTPException(status_code=400, detail="File must be uploaded within a component folder")
+    component = path_parts[0]
+    if component not in settings.allowed_components:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Component '{component}' is not allowed. Allowed components: {', '.join(settings.allowed_components)}",
+        )
 
     # Read content and enforce file size limit (REQ-2.6)
     content_bytes = await file.read()
